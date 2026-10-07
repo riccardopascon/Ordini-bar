@@ -1,0 +1,66 @@
+[
+  {
+    "id": 1,
+    "name": "Agitare Coca Cola",
+    "category": "Bevande",
+    "description": "Lattina da 33 cl",
+    "price": 3.0,
+    "stock": 60
+  },
+  {
+    "id": 2,
+    "name": "Acqua",
+    "category": "Bevande",
+    "description": "Bottiglia 50 cl",
+    "price": 2.0,
+    "stock": 115
+  },
+  {
+    "id": 3,
+    "name": "Hamburger",
+    "category": "Cibo",
+    "description": "Manzo, cheddar, lattuga e salsa della casa",
+    "price": 11.5,
+    "stock": 3
+  },
+  {
+    "id": 5,
+    "name": "Toast",
+    "category": "Cibo",
+    "description": "Pane, prosciutto cotto, formaggio",
+    "price": 6.5,
+    "stock": 11
+  },
+  {
+    "id": 6,
+    "name": "Pizza Margherita",
+    "category": "Cibo",
+    "description": "Pomodoro, mozzarella, basilico",
+    "price": 8.5,
+    "stock": 19
+  },
+  {
+    "id": 7,
+    "name": "Pizza Diavola",
+    "category": "Cibo",
+    "description": "Pomodoro, mozzarella, salame piccante",
+    "price": 9.5,
+    "stock": 10
+  },
+  {
+    "id": 8,
+    "name": "Patatine Fritte",
+    "category": "Cibo",
+    "description": "Porzione abbondante",
+    "price": 4.0,
+    "stock": 28
+  },
+  {
+    "id": 9,
+    "name": "Insalata Mista",
+    "category": "Cibo",
+    "description": "Insalata di stagione con condimento",
+    "price": 5.5,
+    "stock": 8
+  }
+]

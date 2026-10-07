@@ -1,0 +1,282 @@
+[
+  {
+    "id": 1,
+    "tableOrName": "Silvano",
+    "items": [
+      {
+        "id": 1,
+        "name": "Cola",
+        "qty": 2,
+        "price": 3.0
+      },
+      {
+        "id": 2,
+        "name": "Acqua",
+        "qty": 1,
+        "price": 2.0
+      },
+      {
+        "id": 3,
+        "name": "Hamburger",
+        "qty": 1,
+        "price": 11.5
+      }
+    ],
+    "createdAt": "2026-10-04T21:49:33.110966",
+    "status": "completed",
+    "completedAt": "2026-10-04T21:49:39.198490"
+  },
+  {
+    "id": 1,
+    "tableOrName": "Riccardo",
+    "items": [
+      {
+        "id": 1,
+        "name": "Cola",
+        "qty": 2,
+        "price": 3.0
+      },
+      {
+        "id": 8,
+        "name": "Patatine Fritte",
+        "qty": 1,
+        "price": 4.0
+      }
+    ],
+    "createdAt": "2026-10-04T21:55:59.248308",
+    "status": "completed",
+    "completedAt": "2026-10-04T21:56:08.207682"
+  },
+  {
+    "id": 1,
+    "tableOrName": "Silvano",
+    "items": [
+      {
+        "id": 1,
+        "name": "Cola",
+        "qty": 2,
+        "price": 3.0,
+        "note": "Una coca zero"
+      }
+    ],
+    "createdAt": "2026-10-04T22:02:31.031277",
+    "status": "completed",
+    "completedAt": "2026-10-04T22:02:38.143781"
+  },
+  {
+    "id": 2,
+    "tableOrName": "5",
+    "items": [
+      {
+        "id": 1,
+        "name": "Cola",
+        "qty": 3,
+        "price": 3.0,
+        "note": ""
+      },
+      {
+        "id": 5,
+        "name": "Toast",
+        "qty": 2,
+        "price": 6.5,
+        "note": ""
+      }
+    ],
+    "createdAt": "2026-10-04T22:03:29.888359",
+    "status": "completed",
+    "completedAt": "2026-10-04T22:03:56.572899"
+  },
+  {
+    "id": 1,
+    "tableOrName": "Silvano",
+    "items": [
+      {
+        "id": 8,
+        "name": "Patatine Fritte",
+        "qty": 1,
+        "price": 4.0,
+        "note": ""
+      },
+      {
+        "id": 9,
+        "name": "Insalata Mista",
+        "qty": 1,
+        "price": 5.5,
+        "note": ""
+      }
+    ],
+    "createdAt": "2026-10-04T22:08:00.832190",
+    "status": "completed",
+    "completedAt": "2026-10-04T22:09:14.794732"
+  },
+  {
+    "id": 1,
+    "tableOrName": "Pissina",
+    "items": [
+      {
+        "id": 1,
+        "name": "Cola",
+        "qty": 2,
+        "price": 3.0,
+        "note": ""
+      },
+      {
+        "id": 2,
+        "name": "Acqua",
+        "qty": 1,
+        "price": 2.0,
+        "note": ""
+      }
+    ],
+    "createdAt": "2026-10-04T22:13:36.960452",
+    "status": "completed",
+    "completedAt": "2026-10-04T22:13:43.293789"
+  },
+  {
+    "id": 1,
+    "tableOrName": "Yyy",
+    "items": [
+      {
+        "id": 1,
+        "name": "Cola",
+        "qty": 2,
+        "price": 3.0,
+        "note": ""
+      }
+    ],
+    "createdAt": "2026-10-04T22:28:52.228166",
+    "status": "completed",
+    "completedAt": "2026-10-04T22:28:57.061475"
+  },
+  {
+    "id": 1,
+    "tableOrName": "Riccardo",
+    "items": [
+      {
+        "id": 1,
+        "name": "Cola",
+        "qty": 3,
+        "price": 3.0,
+        "note": ""
+      }
+    ],
+    "createdAt": "2026-10-05T20:11:32.483699",
+    "status": "completed",
+    "completedAt": "2026-10-05T20:11:39.453331"
+  },
+  {
+    "id": 1,
+    "tableOrName": "Jjj",
+    "items": [
+      {
+        "id": 1,
+        "name": "Cola",
+        "qty": 3,
+        "price": 3.0,
+        "note": ""
+      }
+    ],
+    "createdAt": "2026-10-05T22:12:23.808370",
+    "status": "completed",
+    "completedAt": "2026-10-05T22:12:27.828351"
+  },
+  {
+    "id": 1,
+    "tableOrName": "2",
+    "items": [
+      {
+        "id": 1,
+        "name": "Cola",
+        "qty": 1,
+        "price": 3.0,
+        "note": ""
+      },
+      {
+        "id": 2,
+        "name": "Acqua",
+        "qty": 1,
+        "price": 2.0,
+        "note": ""
+      },
+      {
+        "id": 3,
+        "name": "Hamburger",
+        "qty": 1,
+        "price": 11.5,
+        "note": ""
+      },
+      {
+        "id": 5,
+        "name": "Toast",
+        "qty": 1,
+        "price": 6.5,
+        "note": ""
+      }
+    ],
+    "createdAt": "2026-10-07T18:26:20.272393",
+    "status": "completed",
+    "completedAt": "2026-10-07T18:26:23.434215"
+  },
+  {
+    "id": 2,
+    "tableOrName": "3",
+    "items": [
+      {
+        "id": 6,
+        "name": "Pizza Margherita",
+        "qty": 1,
+        "price": 8.5,
+        "note": ""
+      },
+      {
+        "id": 7,
+        "name": "Pizza Diavola",
+        "qty": 1,
+        "price": 9.5,
+        "note": ""
+      }
+    ],
+    "createdAt": "2026-10-07T18:26:30.507090",
+    "status": "completed",
+    "completedAt": "2026-10-07T18:26:32.847038"
+  },
+  {
+    "id": 3,
+    "tableOrName": "5",
+    "items": [
+      {
+        "id": 5,
+        "name": "Toast",
+        "qty": 1,
+        "price": 6.5,
+        "note": ""
+      },
+      {
+        "id": 7,
+        "name": "Pizza Diavola",
+        "qty": 1,
+        "price": 9.5,
+        "note": ""
+      }
+    ],
+    "createdAt": "2026-10-07T18:26:41.061138",
+    "status": "completed",
+    "completedAt": "2026-10-07T18:26:43.432865"
+  },
+  {
+    "id": 4,
+    "tableOrName": "7",
+    "items": [
+      {
+        "id": 9,
+        "name": "Insalata Mista",
+        "qty": 1,
+        "price": 5.5,
+        "note": ""
+      }
+    ],
+    "createdAt": "2026-10-07T18:26:49.238262",
+    "status": "completed",
+    "completedAt": "2026-10-07T18:26:53.963797"
+  }
+]
