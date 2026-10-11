@@ -25,7 +25,7 @@ completed_today = []
 next_id = 1
 
 DEFAULT_MENU = [
-    {"id": 1, "name": "Cola", "category": "Bevande", "description": "Lattina da 33 cl", "price": 3.00, "stock": 89},
+    {"id": 1, "name": "Club Sandwich Pig", "category": "Cibo", "description": "Pane", "price": 12.00, "stock": 4},
     {"id": 2, "name": "Acqua", "category": "Bevande", "description": "Bottiglia 50 cl", "price": 2.00, "stock": 120},
     {"id": 3, "name": "Hamburger", "category": "Cibo", "description": "Manzo, cheddar, lattuga e salsa della casa", "price": 11.50, "stock": 7},
     {"id": 4, "name": "Cheeseburger", "category": "Cibo", "description": "Manzo, doppio cheddar, cipolla croccante", "price": 12.50, "stock": 5},
