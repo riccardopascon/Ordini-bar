@@ -26,14 +26,11 @@ next_id = 1
 
 DEFAULT_MENU = [
     {"id": 1, "name": "Club Sandwich Pig", "category": "Cibo", "description": "Pane", "price": 12.00, "stock": 4},
-    {"id": 2, "name": "Acqua", "category": "Bevande", "description": "Bottiglia 50 cl", "price": 2.00, "stock": 120},
-    {"id": 3, "name": "Hamburger", "category": "Cibo", "description": "Manzo, cheddar, lattuga e salsa della casa", "price": 11.50, "stock": 7},
+    {"id": 2, "name": "Club Sandwich Veg", "category": "Cibo", "description": "Pane", "price": 12.00, "stock": 4},
+    {"id": 3, "name": "Club Sandwich Spicy", "category": "Cibo", "description": "Pane", "price": 12.00, "stock": 4},
     {"id": 4, "name": "Cheeseburger", "category": "Cibo", "description": "Manzo, doppio cheddar, cipolla croccante", "price": 12.50, "stock": 5},
-    {"id": 5, "name": "Toast", "category": "Cibo", "description": "Pane, prosciutto cotto, formaggio", "price": 6.50, "stock": 15},
-    {"id": 6, "name": "Pizza Margherita", "category": "Cibo", "description": "Pomodoro, mozzarella, basilico", "price": 8.50, "stock": 20},
-    {"id": 7, "name": "Pizza Diavola", "category": "Cibo", "description": "Pomodoro, mozzarella, salame piccante", "price": 9.50, "stock": 12},
-    {"id": 8, "name": "Patatine Fritte", "category": "Cibo", "description": "Porzione abbondante", "price": 4.00, "stock": 30},
-    {"id": 9, "name": "Insalata Mista", "category": "Cibo", "description": "Insalata di stagione con condimento", "price": 5.50, "stock": 10},
+    {"id": 5, "name": "Toast", "category": "Cibo", "description": "Pane, prosciutto cotto, formaggio", "price": 5.00, "stock": 20},
+    {"id": 6, "name": "Pizza Margherita", "category": "Cibo", "description": "Pomodoro, mozzarella, basilico", "price": 4.00, "stock": 20},
 ]
 
 
