@@ -1102,6 +1102,65 @@
       return false;
     }
 
+    // --- Avviso sonoro cucina ---
+    let audioCtx = null;
+    let audioUnlocked = false;
+
+    function unlockAudio() {
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        // beep silenzioso di sblocco
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination);
+        g.gain.value = 0.0001;
+        o.start(); o.stop(audioCtx.currentTime + 0.01);
+        audioUnlocked = true;
+      } catch (e) {
+        console.warn('Audio non disponibile', e);
+      }
+    }
+
+    function playKitchenAlert() {
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        const now = audioCtx.currentTime;
+        // Tre bip distinti (tipo campanello ordine)
+        const notes = [880, 1175, 880];
+        notes.forEach(function (freq, i) {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'square';
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.0001, now + i * 0.22);
+          gain.gain.exponentialRampToValueAtTime(0.25, now + i * 0.22 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.22 + 0.18);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + i * 0.22);
+          osc.stop(now + i * 0.22 + 0.2);
+        });
+      } catch (e) {
+        console.warn('Impossibile riprodurre avviso', e);
+      }
+      // Titolo scheda lampeggiante se non è in primo piano
+      try {
+        const base = document.title.replace(/^🔔\s*/, '');
+        document.title = '🔔 NUOVO ORDINE';
+        setTimeout(function () { document.title = base; }, 4000);
+      } catch (e) {}
+    }
+
     function handleMsg(data) {
       switch (data.type) {
         case 'init':
@@ -1111,6 +1170,10 @@
           orders.push(data.order);
           if (data.menu) menu = data.menu;
           if (data.stats) stats = data.stats;
+          // Suono se sei in cucina (ruolo o pagina aperta)
+          if (currentRole === 'cucina' || document.getElementById('page-cucina')?.classList.contains('active')) {
+            playKitchenAlert();
+          }
           renderAll(); break;
         case 'order-updated':
           const idx = orders.findIndex(o => o.id === data.order.id);
@@ -1140,6 +1203,8 @@
 
     function selectRole(role) {
       currentRole = role;
+      // Sblocca audio al tocco (necessario sui browser/tablet)
+      unlockAudio();
       document.getElementById('role-screen').classList.add('hidden');
       document.getElementById('app-shell').classList.remove('hidden');
 
