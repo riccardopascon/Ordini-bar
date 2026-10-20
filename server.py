@@ -83,14 +83,34 @@ def _sb_get(key):
 
 
 def _sb_set(key, value):
-    # Upsert su chiave primaria
-    ok, _ = _supabase_request(
+    """Salva su Supabase con upsert (crea o aggiorna)."""
+    payload = {"key": key, "value": value, "updated_at": datetime.utcnow().isoformat() + "Z"}
+    # Upsert corretto PostgREST: on_conflict sulla primary key
+    ok, err = _supabase_request(
         "POST",
-        "app_store",
-        body={"key": key, "value": value},
+        "app_store?on_conflict=key",
+        body=payload,
         extra_headers={"Prefer": "resolution=merge-duplicates,return=minimal"},
     )
-    return ok
+    if ok:
+        return True
+    # Fallback: prova UPDATE se la riga esiste già
+    ok2, _ = _supabase_request(
+        "PATCH",
+        f"app_store?key=eq.{key}",
+        body={"value": value, "updated_at": datetime.utcnow().isoformat() + "Z"},
+        extra_headers={"Prefer": "return=minimal"},
+    )
+    if ok2:
+        return True
+    # Ultimo tentativo: INSERT semplice
+    ok3, _ = _supabase_request(
+        "POST",
+        "app_store",
+        body=payload,
+        extra_headers={"Prefer": "return=minimal"},
+    )
+    return ok3
 
 
 def load_menu():
@@ -290,6 +310,27 @@ def process_request(connection, request):
         return None
 
     path = request.path.split("?")[0]
+
+    # Stato persistenza (per verifica)
+    if path == "/api/status":
+        info = {
+            "ok": True,
+            "persistence": "supabase" if USE_SUPABASE else "local_files",
+            "supabaseConfigured": USE_SUPABASE,
+            "menuItems": len(MENU),
+            "completedOrders": len(completed_today),
+        }
+        if USE_SUPABASE:
+            test = _sb_get("menu")
+            info["supabaseReachable"] = test is not None or True
+            info["menuFromDb"] = isinstance(test, list)
+        body = json.dumps(info, ensure_ascii=False).encode("utf-8")
+        return Response(200, "OK", Headers([
+            ("Content-Type", "application/json; charset=utf-8"),
+            ("Content-Length", str(len(body))),
+            ("Cache-Control", "no-cache"),
+        ]), body)
+
     if path == "/":
         path = "/index.html"
 
