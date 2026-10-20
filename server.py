@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """
-Osteria Lume – Server unificato HTTP + WebSocket
-Menu persistente su file JSON.
+bar – Server HTTP + WebSocket
+Persistenza: Supabase (se configurato) oppure file JSON locali.
 """
 
 import asyncio
 import json
 import mimetypes
+import os
+import urllib.error
+import urllib.request
 from datetime import datetime, date
 from pathlib import Path
 
@@ -19,22 +22,87 @@ DATA_DIR = Path(__file__).parent / "data"
 MENU_FILE = DATA_DIR / "menu.json"
 ORDERS_FILE = DATA_DIR / "completed.json"
 
+# Supabase (opzionale) – impostare su Render come variabili d'ambiente
+SUPABASE_URL = (os.environ.get("SUPABASE_URL") or "").rstrip("/")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY") or ""
+USE_SUPABASE = bool(SUPABASE_URL and SUPABASE_KEY)
+
 clients = set()
 orders = []
 completed_today = []
 next_id = 1
 
 DEFAULT_MENU = [
-    {"id": 1, "name": "Club Sandwich Pig", "category": "Cibo", "description": "Pane", "price": 12.00, "stock": 4},
-    {"id": 2, "name": "Club Sandwich Veg", "category": "Cibo", "description": "Pane", "price": 12.00, "stock": 4},
-    {"id": 3, "name": "Club Sandwich Spicy", "category": "Cibo", "description": "Pane", "price": 12.00, "stock": 4},
+    {"id": 1, "name": "Cola", "category": "Bevande", "description": "Lattina da 33 cl", "price": 3.00, "stock": 89},
+    {"id": 2, "name": "Acqua", "category": "Bevande", "description": "Bottiglia 50 cl", "price": 2.00, "stock": 120},
+    {"id": 3, "name": "Hamburger", "category": "Cibo", "description": "Manzo, cheddar, lattuga e salsa della casa", "price": 11.50, "stock": 7},
     {"id": 4, "name": "Cheeseburger", "category": "Cibo", "description": "Manzo, doppio cheddar, cipolla croccante", "price": 12.50, "stock": 5},
-    {"id": 5, "name": "Toast", "category": "Cibo", "description": "Pane, prosciutto cotto, formaggio", "price": 5.00, "stock": 20},
-    {"id": 6, "name": "Pizza Margherita", "category": "Cibo", "description": "Pomodoro, mozzarella, basilico", "price": 4.00, "stock": 20},
+    {"id": 5, "name": "Toast", "category": "Cibo", "description": "Pane, prosciutto cotto, formaggio", "price": 6.50, "stock": 15},
+    {"id": 6, "name": "Pizza Margherita", "category": "Cibo", "description": "Pomodoro, mozzarella, basilico", "price": 8.50, "stock": 20},
+    {"id": 7, "name": "Pizza Diavola", "category": "Cibo", "description": "Pomodoro, mozzarella, salame piccante", "price": 9.50, "stock": 12},
+    {"id": 8, "name": "Patatine Fritte", "category": "Cibo", "description": "Porzione abbondante", "price": 4.00, "stock": 30},
+    {"id": 9, "name": "Insalata Mista", "category": "Cibo", "description": "Insalata di stagione con condimento", "price": 5.50, "stock": 10},
 ]
 
 
+def _supabase_request(method, path, body=None, extra_headers=None):
+    """Chiamata REST a Supabase. Ritorna (ok, data_or_error)."""
+    url = f"{SUPABASE_URL}/rest/v1/{path}"
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": "return=representation",
+    }
+    if extra_headers:
+        headers.update(extra_headers)
+    data = None if body is None else json.dumps(body).encode("utf-8")
+    req = urllib.request.Request(url, data=data, headers=headers, method=method)
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            raw = resp.read().decode("utf-8")
+            if not raw:
+                return True, None
+            return True, json.loads(raw)
+    except urllib.error.HTTPError as e:
+        err = e.read().decode("utf-8", errors="replace")
+        print(f"⚠️ Supabase HTTP {e.code}: {err[:300]}")
+        return False, err
+    except Exception as e:
+        print(f"⚠️ Supabase errore: {e}")
+        return False, str(e)
+
+
+def _sb_get(key):
+    ok, data = _supabase_request("GET", f"app_store?key=eq.{key}&select=value")
+    if not ok or not data:
+        return None
+    if isinstance(data, list) and len(data) > 0:
+        return data[0].get("value")
+    return None
+
+
+def _sb_set(key, value):
+    # Upsert su chiave primaria
+    ok, _ = _supabase_request(
+        "POST",
+        "app_store",
+        body={"key": key, "value": value},
+        extra_headers={"Prefer": "resolution=merge-duplicates,return=minimal"},
+    )
+    return ok
+
+
 def load_menu():
+    if USE_SUPABASE:
+        print("📦 Carico menu da Supabase…")
+        val = _sb_get("menu")
+        if isinstance(val, list) and len(val) > 0:
+            return val
+        # Prima volta: salva menu di default
+        save_menu(DEFAULT_MENU)
+        return [dict(m) for m in DEFAULT_MENU]
+
     DATA_DIR.mkdir(exist_ok=True)
     if MENU_FILE.exists():
         try:
@@ -48,11 +116,25 @@ def load_menu():
 
 
 def save_menu(menu_list):
+    if USE_SUPABASE:
+        if _sb_set("menu", menu_list):
+            print("💾 Menu salvato su Supabase")
+        else:
+            print("⚠️ Salvataggio menu su Supabase fallito")
+        return
     DATA_DIR.mkdir(exist_ok=True)
     MENU_FILE.write_text(json.dumps(menu_list, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def load_completed():
+    if USE_SUPABASE:
+        print("📦 Carico ordini completati da Supabase…")
+        val = _sb_get("completed")
+        if isinstance(val, list):
+            return val
+        _sb_set("completed", [])
+        return []
+
     DATA_DIR.mkdir(exist_ok=True)
     if ORDERS_FILE.exists():
         try:
@@ -65,12 +147,24 @@ def load_completed():
 
 
 def save_completed():
+    if USE_SUPABASE:
+        if _sb_set("completed", completed_today):
+            print("💾 Ordini completati salvati su Supabase")
+        else:
+            print("⚠️ Salvataggio ordini su Supabase fallito")
+        return
     DATA_DIR.mkdir(exist_ok=True)
     ORDERS_FILE.write_text(json.dumps(completed_today, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+print(f"🔧 Persistenza: {'Supabase' if USE_SUPABASE else 'file locali (data/)'}")
 MENU = load_menu()
 completed_today = load_completed()
+if completed_today:
+    try:
+        next_id = max(int(o.get("id") or 0) for o in completed_today) + 1
+    except Exception:
+        next_id = 1
 
 
 async def broadcast(message: dict):
