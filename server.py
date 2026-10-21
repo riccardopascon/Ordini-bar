@@ -45,72 +45,141 @@ DEFAULT_MENU = [
 ]
 
 
+_last_sb_error = ""
+
+
 def _supabase_request(method, path, body=None, extra_headers=None):
     """Chiamata REST a Supabase. Ritorna (ok, data_or_error)."""
+    global _last_sb_error
     url = f"{SUPABASE_URL}/rest/v1/{path}"
     headers = {
         "apikey": SUPABASE_KEY,
         "Authorization": f"Bearer {SUPABASE_KEY}",
         "Content-Type": "application/json",
+        "Accept": "application/json",
         "Prefer": "return=representation",
     }
     if extra_headers:
         headers.update(extra_headers)
-    data = None if body is None else json.dumps(body).encode("utf-8")
+    data = None if body is None else json.dumps(body, ensure_ascii=False).encode("utf-8")
     req = urllib.request.Request(url, data=data, headers=headers, method=method)
     try:
-        with urllib.request.urlopen(req, timeout=15) as resp:
+        with urllib.request.urlopen(req, timeout=20) as resp:
             raw = resp.read().decode("utf-8")
             if not raw:
                 return True, None
             return True, json.loads(raw)
     except urllib.error.HTTPError as e:
         err = e.read().decode("utf-8", errors="replace")
-        print(f"⚠️ Supabase HTTP {e.code}: {err[:300]}")
+        _last_sb_error = f"HTTP {e.code}: {err[:400]}"
+        print(f"⚠️ Supabase {_last_sb_error}")
         return False, err
     except Exception as e:
+        _last_sb_error = str(e)
         print(f"⚠️ Supabase errore: {e}")
         return False, str(e)
 
 
 def _sb_get(key):
-    ok, data = _supabase_request("GET", f"app_store?key=eq.{key}&select=value")
-    if not ok or not data:
+    ok, data = _supabase_request("GET", f"app_store?key=eq.{key}&select=key,value")
+    if not ok:
         return None
     if isinstance(data, list) and len(data) > 0:
-        return data[0].get("value")
+        val = data[0].get("value")
+        # A volte jsonb arriva come stringa JSON
+        if isinstance(val, str):
+            try:
+                val = json.loads(val)
+            except Exception:
+                pass
+        return val
     return None
 
 
 def _sb_set(key, value):
-    """Salva su Supabase con upsert (crea o aggiorna)."""
-    payload = {"key": key, "value": value, "updated_at": datetime.utcnow().isoformat() + "Z"}
-    # Upsert corretto PostgREST: on_conflict sulla primary key
+    """Salva su Supabase con upsert (crea o aggiorna). Ritorna True/False."""
+    global _last_sb_error
+    payload = {
+        "key": key,
+        "value": value,
+        "updated_at": datetime.utcnow().isoformat() + "Z",
+    }
+
+    # 1) Upsert standard
     ok, err = _supabase_request(
         "POST",
         "app_store?on_conflict=key",
         body=payload,
-        extra_headers={"Prefer": "resolution=merge-duplicates,return=minimal"},
+        extra_headers={"Prefer": "resolution=merge-duplicates,return=representation"},
     )
     if ok:
         return True
-    # Fallback: prova UPDATE se la riga esiste già
-    ok2, _ = _supabase_request(
-        "PATCH",
-        f"app_store?key=eq.{key}",
-        body={"value": value, "updated_at": datetime.utcnow().isoformat() + "Z"},
-        extra_headers={"Prefer": "return=minimal"},
-    )
-    if ok2:
-        return True
-    # Ultimo tentativo: INSERT semplice
-    ok3, _ = _supabase_request(
+
+    # 2) DELETE + INSERT (se upsert non supportato / conflitti strani)
+    _supabase_request("DELETE", f"app_store?key=eq.{key}", extra_headers={"Prefer": "return=minimal"})
+    ok3, err3 = _supabase_request(
         "POST",
         "app_store",
         body=payload,
-        extra_headers={"Prefer": "return=minimal"},
+        extra_headers={"Prefer": "return=representation"},
     )
-    return ok3
+    if ok3:
+        return True
+
+    # 3) PATCH
+    ok2, err2 = _supabase_request(
+        "PATCH",
+        f"app_store?key=eq.{key}",
+        body={"value": value, "updated_at": datetime.utcnow().isoformat() + "Z"},
+        extra_headers={"Prefer": "return=representation"},
+    )
+    if ok2:
+        return True
+
+    _last_sb_error = f"set({key}) fallito: {err or err3 or err2 or _last_sb_error}"
+    print(f"⚠️ {_last_sb_error}")
+    return False
+
+
+def _sb_selftest():
+    """Scrive e rilegge un valore di test. Ritorna dict diagnostico."""
+    global _last_sb_error
+    result = {
+        "tableOk": False,
+        "writeOk": False,
+        "readOk": False,
+        "error": "",
+        "hint": "",
+    }
+    # Prova lettura tabella (anche vuota = OK)
+    ok, data = _supabase_request("GET", "app_store?select=key&limit=1")
+    if not ok:
+        result["error"] = _last_sb_error or str(data)
+        if "relation" in result["error"].lower() or "does not exist" in result["error"].lower() or "42P01" in result["error"]:
+            result["hint"] = "La tabella app_store non esiste. Esegui lo script SQL in Supabase → SQL Editor."
+        elif "401" in result["error"] or "403" in result["error"] or "JWT" in result["error"]:
+            result["hint"] = "Chiave SUPABASE_KEY errata. Usa la service_role (non anon) da Settings → API."
+        elif "Invalid API key" in result["error"]:
+            result["hint"] = "SUPABASE_KEY non valida. Ricopiala da Supabase Settings → API → service_role."
+        else:
+            result["hint"] = "Controlla SUPABASE_URL e SUPABASE_KEY su Render → Environment."
+        return result
+    result["tableOk"] = True
+
+    probe_val = {"ok": True, "ts": datetime.utcnow().isoformat() + "Z"}
+    if not _sb_set("__probe__", probe_val):
+        result["error"] = _last_sb_error
+        result["hint"] = "Scrittura fallita. La tabella app_store manca o non è scrivibile. Riesegui lo script SQL."
+        return result
+    result["writeOk"] = True
+
+    read_back = _sb_get("__probe__")
+    if isinstance(read_back, dict) and read_back.get("ok"):
+        result["readOk"] = True
+    else:
+        result["error"] = "Scrittura ok ma lettura fallita"
+        result["hint"] = "Controlla in Supabase → Table Editor → app_store"
+    return result
 
 
 def load_menu():
@@ -319,11 +388,33 @@ def process_request(connection, request):
             "supabaseConfigured": USE_SUPABASE,
             "menuItems": len(MENU),
             "completedOrders": len(completed_today),
+            "menuFromDb": False,
+            "test": None,
+            "lastError": _last_sb_error or None,
+            "hint": None,
         }
         if USE_SUPABASE:
-            test = _sb_get("menu")
-            info["supabaseReachable"] = test is not None or True
-            info["menuFromDb"] = isinstance(test, list)
+            test = _sb_selftest()
+            info["test"] = test
+            info["menuFromDb"] = isinstance(_sb_get("menu"), list)
+            if not test.get("readOk"):
+                info["ok"] = False
+                info["hint"] = test.get("hint") or "Supabase non scrive/legge correttamente"
+            else:
+                # Forza salvataggio menu e ordini attuali
+                w1 = _sb_set("menu", MENU)
+                w2 = _sb_set("completed", completed_today)
+                info["forcedSaveMenu"] = w1
+                info["forcedSaveCompleted"] = w2
+                info["menuFromDb"] = isinstance(_sb_get("menu"), list)
+                if not w1:
+                    info["ok"] = False
+                    info["hint"] = _last_sb_error or "Salvataggio menu fallito"
+                else:
+                    info["hint"] = "OK: database collegato e funzionante"
+        else:
+            info["ok"] = False
+            info["hint"] = "Mancano SUPABASE_URL e SUPABASE_KEY su Render → Environment"
         body = json.dumps(info, ensure_ascii=False).encode("utf-8")
         return Response(200, "OK", Headers([
             ("Content-Type", "application/json; charset=utf-8"),
